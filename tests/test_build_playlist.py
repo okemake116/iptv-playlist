@@ -546,6 +546,10 @@ def m3u(*entries):
     return '\r\n'.join(lines) + '\r\n'
 
 
+# First line of every written playlist: the program guide for the player.
+HEADER = '#EXTM3U url-tvg="%s"\n' % bp.EPG_URL
+
+
 class MainTest(unittest.TestCase):
 
     def setUp(self):
@@ -584,6 +588,7 @@ class MainTest(unittest.TestCase):
         return playlist, stdout.getvalue(), sorted({item[2] for item in checked})
 
     def test_group_title_is_rewritten(self):
+        # Inside a group channels are sorted by name (casefold), so Latin names come first.
         lists = {'languages/rus.m3u': m3u(
             ['#EXTINF:-1 tvg-id="One.ru@SD" tvg-logo="https://i.example/1.png" group-title="General",Первый (576p)',
              'http://one.example/live.m3u8'],
@@ -594,13 +599,13 @@ class MainTest(unittest.TestCase):
         )}
         playlist, _, _ = self.run_main(lists)
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
-                         '#EXTINF:-1 tvg-id="One.ru@SD" tvg-logo="https://i.example/1.png" group-title="Русские",Первый (576p)\n'
-                         'http://one.example/live.m3u8\n'
+                         HEADER +
+                         '#EXTINF:-1 tvg-id="Three.ru@SD" group-title="Русские",Three\n'
+                         'http://three.example/live.m3u8\n'
                          '#EXTINF:-1 tvg-id="Two.ru@SD" group-title="Русские",Two\n'
                          'http://two.example/live.m3u8\n'
-                         '#EXTINF:-1 tvg-id="Three.ru@SD" group-title="Русские",Three\n'
-                         'http://three.example/live.m3u8\n')
+                         '#EXTINF:-1 tvg-id="One.ru@SD" tvg-logo="https://i.example/1.png" group-title="Русские",Первый (576p)\n'
+                         'http://one.example/live.m3u8\n')
 
     def test_group_title_is_added_when_missing(self):
         lists = {'categories/music.m3u': m3u(
@@ -609,7 +614,7 @@ class MainTest(unittest.TestCase):
         )}
         playlist, _, _ = self.run_main(lists)
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
+                         HEADER +
                          '#EXTINF:-1 group-title="Музыка" tvg-id="A.rs",A\n'
                          'http://a.example/a.m3u8\n'
                          '#EXTINF:-1 group-title="Музыка",B\n'
@@ -624,7 +629,7 @@ class MainTest(unittest.TestCase):
         )}
         playlist, _, _ = self.run_main(lists)
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
+                         HEADER +
                          '#EXTINF:-1 tvg-id="Ref.ru" http-referrer="https://ref.example/" group-title="Русские",Ref\n'
                          '#EXTVLCOPT:http-user-agent=Agent/1.0\n'
                          '#EXTVLCOPT:http-referrer=https://ref.example/\n'
@@ -645,7 +650,7 @@ class MainTest(unittest.TestCase):
         }
         playlist, out, checked = self.run_main(lists)
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
+                         HEADER +
                          '#EXTINF:-1 group-title="Сербия и Босния",RTS 1\n'
                          + same + '\n'
                          '#EXTINF:-1 group-title="Сербия и Босния",RTS 2\n'
@@ -669,13 +674,13 @@ class MainTest(unittest.TestCase):
         )}
         playlist, _, checked = self.run_main(lists)
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
-                         '#EXTINF:-1 group-title="English (для изучения)",Kids\n'
-                         'http://en.example/kids.m3u8\n'
+                         HEADER +
+                         '#EXTINF:-1 group-title="English (для изучения)",Doc\n'
+                         'http://en.example/doc.m3u8\n'
                          '#EXTINF:-1 group-title="English (для изучения)",Edu\n'
                          'http://en.example/edu.m3u8\n'
-                         '#EXTINF:-1 group-title="English (для изучения)",Doc\n'
-                         'http://en.example/doc.m3u8\n')
+                         '#EXTINF:-1 group-title="English (для изучения)",Kids\n'
+                         'http://en.example/kids.m3u8\n')
         self.assertNotIn('http://en.example/news.m3u8', checked)
         self.assertNotIn('http://en.example/nogroup.m3u8', checked)
 
@@ -688,7 +693,7 @@ class MainTest(unittest.TestCase):
         )}
         playlist, _, checked = self.run_main(lists, blocked=['http://blocked.example/a.m3u8'])
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
+                         HEADER +
                          '#EXTINF:-1 group-title="Детские",Fine\n'
                          'http://fine.example/a.m3u8\n')
         self.assertEqual(checked, ['http://fine.example/a.m3u8'])
@@ -701,7 +706,7 @@ class MainTest(unittest.TestCase):
         playlist, _, checked = self.run_main(lists, args=['--strict'], blocked=['http://blocked.example/a.m3u8'])
         self.assertEqual(checked, ['http://blocked.example/a.m3u8'])
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
+                         HEADER +
                          '#EXTINF:-1 group-title="Детские",Blocked\n'
                          'http://blocked.example/a.m3u8\n')
 
@@ -717,20 +722,20 @@ class MainTest(unittest.TestCase):
     def test_default_mode_keeps_ok_and_geo(self):
         playlist, out, _ = self.run_main(self.STATUS_LISTS, self.STATUSES)
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
-                         '#EXTINF:-1 group-title="Обучающие",Ok\n'
-                         'http://ok.example/a.m3u8\n'
+                         HEADER +
                          '#EXTINF:-1 group-title="Обучающие",Geo\n'
                          'http://geo.example/a.m3u8\n'
                          '#EXTINF:-1 group-title="Обучающие",Geo 2\n'
-                         'http://geo2.example/a.m3u8\n')
+                         'http://geo2.example/a.m3u8\n'
+                         '#EXTINF:-1 group-title="Обучающие",Ok\n'
+                         'http://ok.example/a.m3u8\n')
         self.assertIn('ok 1, geo 2, dead 1 of 4 unique', out)
         self.assertIn('  Обучающие: 3\n', out)
 
     def test_strict_mode_keeps_only_ok(self):
         playlist, out, _ = self.run_main(self.STATUS_LISTS, self.STATUSES, args=['--strict'])
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
+                         HEADER +
                          '#EXTINF:-1 group-title="Обучающие",Ok\n'
                          'http://ok.example/a.m3u8\n')
         self.assertIn('  Обучающие: 1\n', out)
@@ -765,7 +770,7 @@ class MainTest(unittest.TestCase):
         }
         playlist, out, _ = self.run_main(lists)
         self.assertEqual(playlist,
-                         '#EXTM3U\n'
+                         HEADER +
                          '#EXTINF:-1 group-title="Русские",R\n'
                          'http://r.example/a.m3u8\n'
                          '#EXTINF:-1 group-title="Сербия и Босния",B\n'
