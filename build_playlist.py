@@ -95,7 +95,7 @@ def status(item):
             if r.status != 200:
                 return 'dead'
             head = r.read(2048)
-            ctype = r.headers.get('Content-Type', '')
+            ctype = r.headers.get('Content-Type', '').lower()   # media types are case-insensitive
             if b'#EXTM3U' in head[:64]:
                 return 'ok' if b'#EXT-X-' in head or b'#EXTINF' in head else 'dead'
             return 'ok' if head and 'text/html' not in ctype else 'dead'
