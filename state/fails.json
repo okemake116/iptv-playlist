@@ -1,1 +1,12 @@
-{}
+{
+"http://158.172.217.18:8000/play/a01k/index.m3u8": 1,
+"http://158.172.217.18:8000/play/a03a/index.m3u8": 1,
+"http://200.122.223.13:55000/play/la-kalle-tdt/index.m3u8": 1,
+"http://digisat.ddns.net:4022/udp/239.0.5.177:8208": 1,
+"https://6n3yope4d9ok-hls-live.5centscdn.com/vaanavil/TV.stream/playlist.m3u8": 1,
+"https://edge.enhdtv.com/8192/index.m3u8": 1,
+"https://kino-1.catcast.tv/content/37739/index.m3u8": 1,
+"https://movil.ejeserver.com/live/lamoradatv.m3u8": 1,
+"https://movil.ejeserver.com/live/mas23tv.m3u8": 1,
+"https://movil.ejeserver.com/live/masmusica.m3u8": 1
+}
